@@ -18,6 +18,8 @@
 //	October 22, 2009 switched natmort and cigar from being sdreport vectors all the time because of northerns and duskys differing from POP
 //	October 24, 2009 added yield ratio for doing prespecified catches for POP this is the ratio of catch to ABC
 //	October 26, 2009 more rreport changes
+//	October 26, 2009 more rreport changes
+//      October 6, 2014  changed srv2 to be a numbers index, got rid of stock-recruitment crap that causes errors in new ADMB compiler.
 //==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
 DATA_SECTION
   !!CLASS ofstream evalout("evalout.prj");
@@ -859,7 +861,7 @@ FUNCTION Get_Predicted_Values
   for (i=1;i<=nyrs_srv1;i++)
     pred_srv1(i) = q_srv1 * (natage(yrs_srv1(i))*elem_prod(srv1_sel,wt));  	// Predicted Survey biomass
  if(nyrs_srv2>0) {  for (i=1;i<=nyrs_srv2;i++)
-    pred_srv2(i) = q_srv2 * (natage(yrs_srv2(i))*elem_prod(srv2_sel,wt));  	// Predicted Survey biomass
+   pred_srv2(i) = q_srv2 * (natage(yrs_srv2(i))*srv2_sel);  	// Predicted Survey RPNs (no weight calculation)
  }
 
 // Predicted Fishery age comps, N, effn, sdnr  
@@ -1192,85 +1194,6 @@ FUNCTION Rec_Like
       else 
         rec_like      = norm2(log_rec_dev+sigr*sigr/2.)/(2.*square(sigr)) ;
   }
-  else  
-  {
-    dvar_vector stmp(styr_rec,endyr);
-    for (i=styr_rec;i<=endyr;i++)
-      stmp(i) = Sp_Biom(i-recage);
-    srm_rec   = SRecruit(stmp);
-    dvar_vector   chi(styr_rec_est,endyr_rec_est);
-    chi         = log(elem_div(sam_rec(styr_rec_est,endyr_rec_est) , srm_rec(styr_rec_est,endyr_rec_est)));
-    dvariable SSQRec = norm2( chi + sigrsq/2.) ;
-    rec_like    = .5*SSQRec/sigrsq + nrecs_est*log(sigr); 
-    rec_like   += .5*norm2( log_rec_dev(styr_rec,styr_rec_est) )/sigrsq + (styr_rec_est-styr_rec)*log(sigr) ; 
-    if (endyr>endyr_rec_est)
-      rec_like += .5*norm2( log_rec_dev(endyr_rec_est,endyr  ) )/sigrsq + (endyr-endyr_rec_est)  *log(sigr) ; 
-  }
-
-FUNCTION dvar_vector SRecruit(const dvar_vector& Stmp)
-  RETURN_ARRAYS_INCREMENT();
-  dvar_vector RecTmp(Stmp.indexmin(),Stmp.indexmax());
-      // dvariable R_alpha;
-      // dvariable R_beta;
-  switch (SrType)
-  {
-    case 1:
-      RecTmp = elem_prod((Stmp / phizero) , mfexp( alpha * ( 1. - Stmp / Bzero ))) ; //Ricker form from Dorn
-      break;
-    case 2:
-      RecTmp = elem_prod(Stmp , 1. / ( alpha + beta * Stmp));        //Beverton-Holt form
-      break;
-    case 3:
-      RecTmp = mfexp(log_mean_rec);                    //Avg recruitment
-      break;
-    case 4:
-      RecTmp = elem_prod(Stmp , mfexp( alpha  - Stmp * beta)) ; //Old Ricker form
-      break;
-  }
-  RETURN_ARRAYS_DECREMENT();
-  return RecTmp;
-
-FUNCTION dvariable SRecruit(const double& Stmp)
-  RETURN_ARRAYS_INCREMENT();
-  dvariable RecTmp;
-  switch (SrType)
-  {
-    case 1:
-      RecTmp = (Stmp / phizero) * mfexp( alpha * ( 1. - Stmp / Bzero )) ; //Ricker form from Dorn
-      break;
-    case 2:
-      RecTmp = Stmp / ( alpha + beta * Stmp);        //Beverton-Holt form
-      break;
-    case 3:
-      RecTmp = mfexp(log_mean_rec);                  //Avg recruitment
-      break;
-    case 4:
-      RecTmp = Stmp * mfexp( alpha  - Stmp * beta) ; //old Ricker form
-      break;
-  }
-  RETURN_ARRAYS_DECREMENT();
-  return RecTmp;
-
-FUNCTION dvariable SRecruit(_CONST dvariable& Stmp)
-  RETURN_ARRAYS_INCREMENT();
-  dvariable RecTmp;
-  switch (SrType)
-  {
-    case 1:
-      RecTmp = (Stmp / phizero) * mfexp( alpha * ( 1. - Stmp / Bzero )) ; //Ricker form from Dorn
-      break;
-    case 2:
-      RecTmp = Stmp / ( alpha + beta * Stmp);        //Beverton-Holt form
-      break;
-    case 3:
-      RecTmp = mfexp(log_mean_rec );                 //Avg recruitment
-      break;
-    case 4:
-      RecTmp = Stmp * mfexp( alpha  - Stmp * beta) ; //old Ricker form
-      break;
-  }
-  RETURN_ARRAYS_DECREMENT();
-  return RecTmp;
 
 FUNCTION compute_spr_rates
   //Compute SPR Rates and add them to the likelihood for Females 
