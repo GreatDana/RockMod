@@ -4,7 +4,7 @@
 //  Alaska Fisheries Science Center, October 22, 2009
 //  D. Hanselman:dana.hanselman@noaa.gov
 //  K. Shotwell: kalei.shotwell@noaa.gov
-//  P. Hulson: dana.hanselman@noaa.gov
+//  P. Hulson:   pete.hulson@noaa.gov
 //  Input file:   tem.dat, as in tem(plate)
 //  Control file: tem.ctl
 //  Program file: tem.tpl
